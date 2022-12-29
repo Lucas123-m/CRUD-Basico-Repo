@@ -17,7 +17,7 @@ class Crud:
 		menu_inicio = tk.Menu(menu,tearoff=0)
 		menu_inicio.add_command(label="Conectar con base de datos",command=self.conectar_bbdd)
 
-		menu.add_cascade(label="Acciones",menu=menu_inicio)
+		menu.add_cascade(label="Inicio",menu=menu_inicio)
 
 		ventana.title("Prueba")
 		labels_entries = ["ID","Name","Surname","Age","Address",]
@@ -28,8 +28,6 @@ class Crud:
 		for i,label in enumerate(labels_entries):
 			tk.Label(frame,text=label + " :").grid(row=i,column=0,padx=5,pady=3)
 
-		label_alert = tk.Label(ventana,text="Hola a todos").grid(row=i+1,column=1,pady=5)
-
 		entries = ["ID","name","surname","age","addres"]
 		dict_entries = {entry:"" for entry in entries}
 
@@ -37,23 +35,29 @@ class Crud:
 			dict_entries[entry] = tk.Entry(frame)
 			dict_entries[entry].grid(row=i,column=1,padx=5,pady=3)
 
+		ttk.Button(ventana,text="NUEVO",width=20).grid(row=i+1,column=0,pady=5)
+		ttk.Button(ventana,text="GUARDAR",width=20).grid(row=i+1,column=1,pady=5)
+		ttk.Button(ventana,text="CANCELAR",width=20).grid(row=i+1,column=2,pady=5)
+
 		self.tree = ttk.Treeview(ventana,height=10,column=(0,1,2,3))
 
 		self.tree.grid(row=i+2,column=0,columnspan=4,padx=5,pady=5,sticky=tk.W + tk.E),
 		
 		for i,column_name in enumerate(labels_entries):
 			self.tree.heading("#" + str(i),text=column_name,anchor=tk.CENTER)
+			self.tree.column("#" + str(i),anchor=tk.CENTER)
 
-		ttk.Button(ventana,text="DELETE",width=20).grid(row=7,column=0,pady=5)
-		ttk.Button(ventana,text="EDIT",width=20).grid(row=7,column=2,pady=5)
+		ttk.Button(ventana,text="DELETE",width=20).grid(row=8,column=1,pady=5,padx=100)
+		ttk.Button(ventana,text="EDIT",width=20).grid(row=8,column=2,pady=5)
 
 	def conectar_bbdd(self):
 		try:
 			query = "SELECT * FROM DATA"
 			data = self.run_query(query)
-			for row in data:
-				self.tree.insert("",0,text=row[0],values=[row[1],row[2],row[3]])
 			messagebox.showinfo("Conexion","Se ha conectado con la base de datos correctamente.")
+			for row in data:
+				self.tree.insert("",0,text=row[0],values=[row[1],row[2],row[3],row[4]])
+
 		except Exception as e:
 			msg = "Se ha producido el siguiente error al conectar con la tabla de la base de datos." + f"\n{e}"
 			messagebox.showerror("Error",msg)
