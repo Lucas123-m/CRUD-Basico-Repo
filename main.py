@@ -53,14 +53,13 @@ class Crud:
 		self.button_accept.grid(row=5,column=1,pady=5)
 		self.button_cancel.grid(row=5,column=2,pady=5)
 
-		self.tree = ttk.Treeview(self.window,height=10,column=("c0","c1","c2","c3"))
+		self.tree = ttk.Treeview(self.window,height=10,column=self.labels_entries)
 
 		self.tree.grid(row=6,column=0,columnspan=4,padx=5,pady=5,sticky=tk.W + tk.E),
-		
-		for i,column_name in enumerate(self.labels_entries):
-			print(i)
-			self.tree.heading("#" + str(i),text=column_name,anchor=tk.CENTER)
-			self.tree.column("#" + str(i),anchor=tk.CENTER)
+		self.tree.column("#0",width=0,stretch=tk.NO) 
+		for i,label in enumerate(self.labels_entries):
+		 	self.tree.heading(str(i),text=label)
+		 	self.tree.column(str(i),anchor="c")
 
 		self.button_delete = ttk.Button(self.window,text="DELETE",width=20,state=tk.DISABLED)
 		self.button_edit = ttk.Button(self.window,text="EDIT",width=20,state=tk.DISABLED)
@@ -79,6 +78,7 @@ class Crud:
 				query = "DROP TABLE IF EXISTS " + TABLE_NAME
 				print(self.run_query(query))
 				messagebox.showinfo("Deleting completed","The table " + TABLE_NAME +" has been deleted.")
+				self.delete_rows_tree()
 			except Exception as e:
 				messagebox.showerror("Error","An error occurs when deleting the table: " + "\n{e}.")
 			finally:
@@ -88,9 +88,10 @@ class Crud:
 		try:
 			query = "SELECT * FROM " + TABLE_NAME
 			data = self.run_query(query)
+			#data.sort(reverse=True)
 			messagebox.showinfo("Connection","The connection has been correctly performed with table " + TABLE_NAME)
 			for row in data:
-				self.tree.insert("",0,text=row[0],values=[row[1],row[2],row[3],row[4]])
+				self.tree.insert("",tk.END,values=(row[0],row[1],row[2],row[3],row[4]))
 			self.change_state_buttons("able")
 		except Exception as e:
 			msg = "An error occurs when connecting the database: " + f"\n{e}"
