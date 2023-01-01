@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog 
 import sqlite3
+import load_database
 
 DB_PATH = "main_db.db"
 TABLE_NAME = "DATA"
@@ -20,19 +21,23 @@ class Crud:
 		self.design_treeview_and_buttons()
 
 	def design_labels(self):
-		self.frame = tk.LabelFrame(self.window,text="Fields of data",width=10)
-		self.frame.grid(row=0,column=1,pady=5,padx=10)
+		self.frame = tk.LabelFrame(self.window,text="Fields of data",width=4)
+		self.frame.grid(row=0,column=1,pady=0,padx=10)
 
+		self.labels_entries_empty = {label:"" for label in self.labels_entries}
 		for i,label in enumerate(self.labels_entries):
-			tk.Label(self.frame,text=label + " :").grid(row=i,column=0,padx=5,pady=3)
+			if label=="ID":
+				continue
+			tk.Label(self.frame,text=label + " :").grid(row=i-1,column=0,padx=5,pady=3)
 
 	def design_entries(self):
-		entries = ["ID","name","surname","age","addres"]
-		dict_entries = {entry:"" for entry in entries}
-
-		for i,entry in enumerate(entries):
-			dict_entries[entry] = tk.Entry(self.frame)
-			dict_entries[entry].grid(row=i,column=1,padx=5,pady=3)
+		
+		self.dict_entries = {entry:"" for entry in self.labels_entries if entry!="ID"}
+		self.text_variables = {entry:tk.StringVar() for entry in self.dict_entries}
+		for i,entry in enumerate(self.dict_entries.keys()):
+			self.dict_entries[entry] = tk.Entry(self.frame,textvariable=self.text_variables[entry])
+			self.dict_entries[entry].grid(row=i,column=1,padx=5,pady=3)
+		self.change_state_entries("disable")
 
 	def design_menu(self):
 		menu = tk.Menu(self.window)
@@ -45,27 +50,30 @@ class Crud:
 
 	def design_treeview_and_buttons(self):
 
-		self.button_new = ttk.Button(self.window,text="NEW",width=20,state=tk.DISABLED)
-		self.button_accept = ttk.Button(self.window,text="ACCEPT",width=20,state=tk.DISABLED)
-		self.button_cancel = ttk.Button(self.window,text="CANCEL",width=20,state=tk.DISABLED)
-		
-		self.button_new.grid(row=5,column=0,pady=5)
-		self.button_accept.grid(row=5,column=1,pady=5)
-		self.button_cancel.grid(row=5,column=2,pady=5)
+		self.button_new = ttk.Button(self.window,text="NEW",width=20,state=tk.DISABLED,command=self.add_new_register)
+		#self.refresh_button = ttk.Button(self.window,text="REFRESH",width=20,state=tk.DISABLED)
+		self.button_clear = ttk.Button(self.window,text="CLEAR CONTENTS",width=20,state=tk.DISABLED,command=self.clear_contents)
+
+		self.button_new.grid(row=4,column=0,pady=5,padx=10)
+		#self.refresh_button.grid(row=4,column=1,pady=5,padx=20)
+		self.button_clear.grid(row=4,column=2,pady=5,padx=10)
 
 		self.tree = ttk.Treeview(self.window,height=10,column=self.labels_entries)
 
-		self.tree.grid(row=6,column=0,columnspan=4,padx=5,pady=5,sticky=tk.W + tk.E),
+		self.tree.grid(row=5,column=0,columnspan=4,padx=5,pady=5,sticky=tk.W + tk.E),
 		self.tree.column("#0",width=0,stretch=tk.NO) 
+		width = 100
 		for i,label in enumerate(self.labels_entries):
-		 	self.tree.heading(str(i),text=label)
-		 	self.tree.column(str(i),anchor="c")
+		 	self.tree.heading(label,text=label)
+		 	self.tree.column(label,width=10,anchor="c")
 
 		self.button_delete = ttk.Button(self.window,text="DELETE",width=20,state=tk.DISABLED)
-		self.button_edit = ttk.Button(self.window,text="EDIT",width=20,state=tk.DISABLED)
+		self.button_edit = ttk.Button(self.window,text="EDIT",width=20,state=tk.DISABLED,command=self.edit_row)
+		self.button_accept = ttk.Button(self.window,text="ACCEPT",width=20,state=tk.DISABLED,command=self.accept_changes)
 
-		self.button_delete.grid(row=7,column=1,pady=5,padx=100)
-		self.button_edit.grid(row=7,column=2,pady=5)
+		self.button_delete.grid(row=6,column=0,pady=5,padx=10)
+		self.button_edit.grid(row=6,column=1,pady=5,padx=10)
+		self.button_accept.grid(row=6,column=2,pady=5,padx=10)
 
 	def exit(self):
 		messagebox.showinfo("Exit application","You are leaving this application.")
@@ -87,12 +95,12 @@ class Crud:
 	def connecting_db(self):
 		try:
 			query = "SELECT * FROM " + TABLE_NAME
-			data = self.run_query(query)
+			self.run_query(query)
 			#data.sort(reverse=True)
 			messagebox.showinfo("Connection","The connection has been correctly performed with table " + TABLE_NAME)
-			for row in data:
-				self.tree.insert("",tk.END,values=(row[0],row[1],row[2],row[3],row[4]))
+			self.load_data_treeview()
 			self.change_state_buttons("able")
+			self.change_state_entries("able")
 		except Exception as e:
 			msg = "An error occurs when connecting the database: " + f"\n{e}"
 			messagebox.showerror("Error",msg)
@@ -104,24 +112,92 @@ class Crud:
 					self.run_query(query)
 					messagebox.showinfo("Sucess","The table " + TABLE_NAME + " has been created.")
 					self.change_state_buttons("able")
+					self.change_state_entries("able")
+					load_database.load_db()
+					self.load_data_treeview()
 				except Exception as e:
 					messagebox.showerror("Error",e)
 					self.change_state_buttons("disable")
+					self.change_state_entries("disable")
 
 	def change_state_buttons(self,type_change):
-		self.buttons = [self.button_new,self.button_accept,self.button_cancel,self.button_edit,self.button_delete]
+		self.buttons = [self.button_accept,self.button_new,self.button_clear,self.button_edit,self.button_delete]
 		if type_change == "disable":
-			for button in self.buttons:
-				button["state"] = tk.DISABLED
+			for i in range(len(self.buttons)):
+				self.buttons[i]["state"] = tk.DISABLED
 		elif type_change == "able":
-			for button in self.buttons:
-				button["state"] = tk.ACTIVE
+			for i in range(1,len(self.buttons)):
+				self.buttons[i]["state"] = tk.ACTIVE
+			self.buttons[0]["state"] = tk.DISABLED
 		else:
 			pass
+
+	def change_state_entries(self,type_change):
+		if type_change == "able":
+			for entry in self.dict_entries.values():
+				entry["state"] = tk.NORMAL
+		elif type_change == "disable":
+			for entry in self.dict_entries.values():
+				entry["state"] = tk.DISABLED
 
 	def delete_rows_tree(self):
 		for row in self.tree.get_children():
 			self.tree.delete(row)
+
+	def load_data_treeview(self):
+		query = "SELECT * FROM " + TABLE_NAME
+		data = self.run_query(query)
+		self.delete_rows_tree()
+		for row in data:
+			self.tree.insert("",tk.END,values=row)
+
+	def add_new_register(self):
+		vacios = []
+		for name,entry in self.dict_entries.items():
+			if self.dict_entries[name].get() == "":
+				vacios.append(name)
+
+		if len(vacios)!=0:
+			msg = "Los siguientes campos no pueden estar vacios: \n\n" + "\n".join(vacios)
+			messagebox.showinfo("Alerta!",msg)
+			return
+
+		if not self.dict_entries["Age"].get().isnumeric():
+			messagebox.showinfo("Alerta!","El campo 'Age' debe contener un valor numerico.")
+			return 
+
+		query = "INSERT INTO DATA(NAME,SURNAME,AGE,ADDRESS) VALUES(?,?,?,?)"
+		parameters = [entry.get() for entry in self.dict_entries.values()]
+		self.run_query(query,parameters)
+		self.load_data_treeview()
+		messagebox.showinfo("Informacion",f"El registro {parameters} ha sido guardado correctamente en la base de datos.")
+
+	def accept_changes(self):
+		try: 
+			selected_item = self.tree.selection()
+			
+			print(self.tree.item(selected_item)["values"])
+		except Exception as e:
+			messagebox.showerror("Error",e)
+	def edit_row(self):
+		try:
+			selected_item = self.tree.selection()
+			
+			row = self.tree.item(selected_item)["values"]
+			print(row)
+			for i,value in enumerate(row[1:],start=1):
+				self.text_variables[self.labels_entries[i]].set(value)
+
+			self.button_new["state"] = tk.DISABLED
+			self.button_delete["state"] = tk.DISABLED
+			self.button_accept["state"] = tk.ACTIVE
+		except Exception as e:
+			messagebox.showerror("Error","Ha ocurrido el siguiente error: " + e)
+
+	def clear_contents(self):
+		for entry in self.dict_entries.values():
+			entry.delete(0,tk.END)
+		self.change_state_buttons("able")
 
 	def run_query(self,query,parameters=()):
 		with sqlite3.connect(DB_PATH) as conn:
