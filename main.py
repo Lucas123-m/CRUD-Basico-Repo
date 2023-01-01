@@ -173,31 +173,44 @@ class Crud:
 		messagebox.showinfo("Informacion",f"El registro {parameters} ha sido guardado correctamente en la base de datos.")
 
 	def accept_changes(self):
-		try: 
-			selected_item = self.tree.selection()
-			
-			print(self.tree.item(selected_item)["values"])
-		except Exception as e:
-			messagebox.showerror("Error",e)
-	def edit_row(self):
 		try:
 			selected_item = self.tree.selection()
+			id_registro = self.tree.item(selected_item)['values'][0]
+			for name,var in self.text_variables.items():
+				parameter = [var.get()]
+				query = f"UPDATE DATA SET {name.upper()} = ? where id = {id_registro}"
+				self.run_query(query,parameter)
+			self.load_data_treeview()
+			self.clear_entries()
+			messagebox.showinfo("Info","Se ha actualizado el registro correctamente.")
+		except Exception as e:
+			messagebox.showerror("Error",e)
 			
-			row = self.tree.item(selected_item)["values"]
-			print(row)
-			for i,value in enumerate(row[1:],start=1):
-				self.text_variables[self.labels_entries[i]].set(value)
-
+	def edit_row(self):
+		try:
 			self.button_new["state"] = tk.DISABLED
 			self.button_delete["state"] = tk.DISABLED
 			self.button_accept["state"] = tk.ACTIVE
+			self.tree.bind("<ButtonRelease-1>",self.show)
 		except Exception as e:
-			messagebox.showerror("Error","Ha ocurrido el siguiente error: " + e)
+			messagebox.showerror("Error","Ha ocurrido el siguiente error: " + str(e))
+
+	def show(self,event):
+		
+		selected_item = self.tree.selection()
+		row = self.tree.item(selected_item)["values"]		
+		for i,value in enumerate(row[1:],start=1):
+			self.text_variables[self.labels_entries[i]].set(value)
+
 
 	def clear_contents(self):
+		self.clear_entries()
+		self.tree.unbind("<ButtonRelease-1>")
+		self.change_state_buttons("able")
+
+	def clear_entries(self):
 		for entry in self.dict_entries.values():
 			entry.delete(0,tk.END)
-		self.change_state_buttons("able")
 
 	def run_query(self,query,parameters=()):
 		with sqlite3.connect(DB_PATH) as conn:

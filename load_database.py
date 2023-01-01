@@ -1,6 +1,6 @@
 import sqlite3
 from tkinter import messagebox
-CSV_PATH = r"C:\Users\Tec\Desktop\Lucas\Busqueda de conocimiento\Autoaprendizaje\Python\Autodidacta\proyectos\2022\taxables.csv"
+CSV_PATH = "taxables.csv"
 DB_PATH = "main_db.db"
 def load_db():
 	try:
@@ -16,7 +16,6 @@ def load_db():
 					line[i] = line[i].strip('"')
 
 				parameters = line[1:5]
-				print(parameters)
 				query = "INSERT INTO DATA(NAME,SURNAME,AGE,ADDRESS) VALUES(?,?,?,?)"
 				run_query(query,parameters)
 
