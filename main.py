@@ -67,7 +67,7 @@ class Crud:
 		 	self.tree.heading(label,text=label)
 		 	self.tree.column(label,width=10,anchor="c")
 
-		self.button_delete = ttk.Button(self.window,text="DELETE",width=20,state=tk.DISABLED)
+		self.button_delete = ttk.Button(self.window,text="DELETE",width=20,state=tk.DISABLED,command=self.delete_elements)
 		self.button_edit = ttk.Button(self.window,text="EDIT",width=20,state=tk.DISABLED,command=self.edit_row)
 		self.button_accept = ttk.Button(self.window,text="ACCEPT",width=20,state=tk.DISABLED,command=self.accept_changes)
 
@@ -175,6 +175,9 @@ class Crud:
 	def accept_changes(self):
 		try:
 			selected_item = self.tree.selection()
+			if len(selected_item) > 1:
+				messagebox.showinfo("Warning","No se puede editar mas de un elemento a la vez.")
+				return
 			id_registro = self.tree.item(selected_item)['values'][0]
 			for name,var in self.text_variables.items():
 				parameter = [var.get()]
@@ -198,9 +201,27 @@ class Crud:
 	def show(self,event):
 		
 		selected_item = self.tree.selection()
+		if len(selected_item) > 1:
+			return
+		print(selected_item)
 		row = self.tree.item(selected_item)["values"]		
 		for i,value in enumerate(row[1:],start=1):
 			self.text_variables[self.labels_entries[i]].set(value)
+
+	def delete_elements(self):
+		self.selected_items = self.tree.selection()
+		if len(self.selected_items)==0:
+			return
+		ids_for_delete = []
+		for item in self.selected_items:
+			id_element = self.tree.item(item)["values"][0]
+			ids_for_delete.append(id_element)
+		print(ids_for_delete)
+
+		for id_item in ids_for_delete:
+			query = "DELETE FROM DATA WHERE ID = " + str(id_item)
+			self.run_query(query)
+		self.load_data_treeview()
 
 
 	def clear_contents(self):
