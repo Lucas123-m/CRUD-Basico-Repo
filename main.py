@@ -50,9 +50,9 @@ class Crud:
 
 	def design_treeview_and_buttons(self):
 
-		self.button_new = ttk.Button(self.window,text="NEW",width=20,state=tk.DISABLED,command=self.add_new_register)
+		self.button_new = ttk.Button(self.window,text="NEW",state=tk.DISABLED,command=self.add_new_register)
 		#self.refresh_button = ttk.Button(self.window,text="REFRESH",width=20,state=tk.DISABLED)
-		self.button_clear = ttk.Button(self.window,text="CLEAR CONTENTS",width=20,state=tk.DISABLED,command=self.clear_contents)
+		self.button_clear = ttk.Button(self.window,text="CLEAR CONTENTS",state=tk.DISABLED,command=self.clear_contents)
 
 		self.button_new.grid(row=4,column=0,pady=5,padx=10)
 		#self.refresh_button.grid(row=4,column=1,pady=5,padx=20)
@@ -67,9 +67,9 @@ class Crud:
 		 	self.tree.heading(label,text=label)
 		 	self.tree.column(label,width=10,anchor="c")
 
-		self.button_delete = ttk.Button(self.window,text="DELETE",width=20,state=tk.DISABLED,command=self.delete_elements)
-		self.button_edit = ttk.Button(self.window,text="EDIT",width=20,state=tk.DISABLED,command=self.edit_row)
-		self.button_accept = ttk.Button(self.window,text="ACCEPT",width=20,state=tk.DISABLED,command=self.accept_changes)
+		self.button_delete = ttk.Button(self.window,text="DELETE",state=tk.DISABLED,command=self.delete_elements)
+		self.button_edit = ttk.Button(self.window,text="EDIT",state=tk.DISABLED,command=self.edit_row)
+		self.button_accept = ttk.Button(self.window,text="ACCEPT",state=tk.DISABLED,command=self.accept_changes)
 
 		self.button_delete.grid(row=6,column=0,pady=5,padx=10)
 		self.button_edit.grid(row=6,column=1,pady=5,padx=10)
@@ -222,7 +222,6 @@ class Crud:
 			query = "DELETE FROM DATA WHERE ID = " + str(id_item)
 			self.run_query(query)
 		self.load_data_treeview()
-
 
 	def clear_contents(self):
 		self.clear_entries()
